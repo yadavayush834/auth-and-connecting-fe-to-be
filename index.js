@@ -5,7 +5,12 @@ const app = express();
 app.use(express.json());
 
 const users = [];
-app.post('/signup',function(req,res){
+
+function logger(req,res,next){
+    console.log(req.method +"request came");
+    next();
+}
+app.post('/signup',logger,function(req,res){
     const username = req.body.username;
     const password = req.body.password;
     users.push({
@@ -17,7 +22,7 @@ app.post('/signup',function(req,res){
     })
 })
 
-app.post('/signin',function(req,res){
+app.post('/signin',logger,function(req,res){
     const username = req.body.username;
     const password = req.body.password;
     let founduser = null;
@@ -44,9 +49,25 @@ app.post('/signin',function(req,res){
     }
 })
 
-app.get('/me',function(req,res){
+function auth(req,res,next){
     const token = req.headers.token;
     const decodedata = jwt.verify(token,JWT_SECRET);
+
+    if(decodedata.username){
+        req.username = decodedata.username;
+        next();
+    }
+    else{
+        res.json({
+            message:"you are not logged in"
+        })
+    }
+}
+
+app.get('/me',auth,function(req,res){
+    const currentuser = req.username;
+    // const token = req.headers.token;
+    // const decodedata = jwt.verify(token,JWT_SECRET);
 
     if(decodedata.username){
         let founduser = null;
